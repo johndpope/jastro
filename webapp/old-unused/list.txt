@@ -1,0 +1,82 @@
+Chart Generator:
+  APIKEY
+  title
+  notes
+  date
+  time
+  placename
+  lat
+  lng
+  geo/helio
+  zod
+  ... or ID of saved chart
+
+UI
+
+database:
+  accounts
+    ID
+    email
+    password
+    APIKEY
+    settings
+  people
+    ID
+    accountID
+    first, last
+    datetime
+    placename
+    lat
+    lng
+    timezone
+    notes
+  events
+    ID
+    accountID
+    timestamp
+    type
+    description
+  atlas (later)
+
+tags for people, custom properties
+  propTypes
+    ID
+    accountID
+    propName
+    propFormatRegex
+    showInList
+    includeInSearch
+  propValues
+    propTypeID
+    personID
+    propValue
+
+business logic:
+  session information:
+    logged-in account record
+  accounts:
+    register
+    remind
+    login
+    verify
+    getSetting
+    setSetting
+    * validation of email, password
+  people
+    search( text, date range, place search ) -> overview(ID+basic+showInList)
+    getPerson( ID )
+    newPerson( basic + custom )
+    setPersonProp( ... )
+    * validation of date/time
+  atlas
+    look up place
+  properties
+    define
+    get list of custom
+    change/delete
+  events
+    log( type, text )
+  charts
+    generate
+    getData
+    getJAR

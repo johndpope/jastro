@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<project default="jar">
+	
+	<target name="jar">
+		<!-- build the JAR for the astrology clock -->
+		<jar destfile="${basedir}/jastrologyclock.jar" basedir="${basedir}/bin">
+			<include name="com/marklipson/astrologyclock/**"/>
+			<exclude name="com/marklipson/astrologyclock/Grabber.*"/>
+            <exclude name="com/marklipson/astrologyclock/unused/**"/>
+            <exclude name="com/marklipson/astrologyclock/resources/**"/>
+		    <manifest>
+		      <attribute name="Built-By" value="Mark Lipson"/>
+		      <attribute name="Main-Class" value="com.marklipson.astrologyclock.JavaChart"/>
+		    </manifest>
+        </jar>
+        <jar destfile="${basedir}/jastrologyclock-full.jar" basedir="${basedir}/bin">
+            <include name="com/marklipson/astrologyclock/**"/>
+            <exclude name="com/marklipson/astrologyclock/Grabber.*"/>
+            <exclude name="com/marklipson/astrologyclock/unused/**"/>
+            <manifest>
+              <attribute name="Built-By" value="Mark Lipson"/>
+              <attribute name="Main-Class" value="com.marklipson.astrologyclock.JavaChart"/>
+            </manifest>
+        </jar>
+        <jar destfile="${basedir}/jastrologyclock-resources.jar" basedir="${basedir}/bin">
+            <include name="com/marklipson/astrologyclock/resources/**"/>
+            <exclude name="com/marklipson/astrologyclock/resources/atlas/us-cities_lg.txt.zip"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/moon*.lng"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/mercury.lng"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/venus.lng"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/mars.lng"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/earth.elem"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/saturn.elem"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/uranus.elem"/>
+            <exclude name="com/marklipson/astrologyclock/resources/ephemeris/neptune.elem"/>
+        </jar>
+        <jar destfile="${basedir}/jastrologyclock-resources-ext.jar" basedir="${basedir}/bin">
+            <include name="com/marklipson/astrologyclock/resources/atlas/us-cities_lg.txt.zip"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/moon*.lng"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/mercury.lng"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/venus.lng"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/mars.lng"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/earth.elem"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/saturn.elem"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/uranus.elem"/>
+            <include name="com/marklipson/astrologyclock/resources/ephemeris/neptune.elem"/>
+        </jar>
+		<!-- build the JAR for generating charts -->
+		<!--
+		<jar destfile="${basedir}/chartgenerator.jar" basedir="${basedir}/bin">
+			<include name="com/marklipson/astrologyclock/**"/>
+		    <manifest>
+		      <attribute name="Built-By" value="Mark Lipson"/>
+		      <attribute name="Main-Class" value="com.marklipson.astrologyclock.Grabber"/>
+		    </manifest>
+        </jar>
+        -->
+
+		<!-- copy the JARs into the marklipson.com folder -->
+        <loadfile property="version" srcFile="version.txt"/>
+		<copy file="${basedir}/jastrologyclock.jar" tofile="${basedir}/../marklipson.com/www/jastro/beta/jastrologyclock-${version}.jar"/>
+        <copy file="${basedir}/version.txt" tofile="${basedir}/../marklipson.com/www/jastro/beta/latest-version.txt"/>
+		<!--
+        <copy todir="${basedir}/../marklipson.com/www/jastro/beta/" file="${basedir}/jastrologyclock-resources.jar"/>
+        -->
+		<!-- locations for servlet -->
+		<!--
+        <copy todir="${basedir}/../marklipson.com/" file="${basedir}/chartgenerator.jar"/>
+		<copy todir="${basedir}/webapp/WEB-INF/lib/" file="${basedir}/jastrologyclock.jar"/>
+		<jar destfile="${basedir}/chartGenerator.war" basedir="${basedir}/webapp">
+		    <manifest>
+		      <attribute name="Built-By" value="Mark Lipson"/>
+		    </manifest>
+        </jar>
+		<copy todir="/Users/Mark/Desktop/apache-tomcat-5.5.20/webapps/" file="${basedir}/chartGenerator.war"/>
+		-->
+    </target>
+
+	<target name="webapp-compile">	
+
+		<echo>Compiling</echo>
+        <javac classpathref="class.path" srcdir="${basedir}/src" destdir="${basedir}/bin" debug="on" debuglevel="lines,vars,source"/>
+        <echo>Jarring</echo>
+        <jar destfile="${basedir}/webapp/WEB-INF/lib/jastrologyclock-web.jar" basedir="${basedir}/bin">
+            <include name="com/marklipson/astrologyclock/**"/>
+            <manifest>
+              <attribute name="Built-By" value="Mark Lipson"/>
+            </manifest>
+        </jar>
+        <echo>Warring</echo>
+        <copy toDir="${basedir}/webapp/WEB-INF/lib/">
+          <fileset dir="${basedir}/lib" includes="*.jar"/>
+        </copy>
+        <jar destfile="${basedir}/generator.war" basedir="${basedir}/webapp">
+            <manifest>
+              <attribute name="Built-By" value="Mark Lipson"/>
+            </manifest>
+        </jar>
+	</target>
+
+	<target name="webapp" depends="webapp-compile"> 
+
+		<echo>Deploying Locally</echo>
+        <copy todir="/Applications/Tomcat/webapps/" file="${basedir}/generator.war"/>
+        <echo>Deploying Live</echo>
+        <exec executable="scp">
+            <arg value="${basedir}/generator.war"/>
+            <arg value="marklipson@173.255.223.166:"/>
+        </exec>
+        <exec executable="ssh">
+            <arg value="marklipson@173.255.223.166"/>
+            <arg value="cp"/>
+            <arg value="generator.war"/>
+            <arg value="/var/lib/tomcat6/webapps/"/>
+        </exec>
+        <!-- -->
+        
+    </target>
+</project>

@@ -1,0 +1,59 @@
+<?php
+  include( "common.php" );
+  
+  $version = trim( file_get_contents( "latest-version.txt" ) );
+?>
+<html>
+ <head>
+  <title>Astrology Clock</title>
+  <link rel="StyleSheet" href="common.css" type="text/css" media="screen"></link>
+  <script type="text/javascript" src="common.js">//</script>
+ </head>
+<body>
+  <?php
+    pageHeader( "The Astrology Clock",
+                    '<a href="#instructions">instructions</a> | ' .
+                    '<a href="javascript:createPermalink();" title="create permalink">permalink</a> | ' .
+                    '<a href="javascript:createChartPermalink()" title="create link to chart only">chart only</a> | ' .
+                    '<a href="javascript:save()" title="save chart as downloadable graphic">save</a> ' );
+  ?>
+  <div class='main'>
+    <div class='inner'>
+      <?php chartApplet( $version, "92%" ); ?>
+    </div>
+    <div class='tips'>
+      <a name="instructions"/>
+      <h2>
+        Instructions
+      </h2>
+      <ul>
+        <li>Click on the 'search' option to enable a search panel.  In the entry box on the
+         left, you can enter expressions like "sun in aries" or "moon conjunct
+         sun".  Just click 'next' or 'previous' to jump forward or backward to the next event.
+         You can search for multiple events happening at the same time like this: "sun trine mars and mars trine jupiter".
+        </li>
+        <li>Drag red ball to animate time backward or forward.</li>
+        <li>The "sticky" checkbox keeps time animating - otherwise animation stops when you unclick.</li>
+        <li>Planets can be dragged and the time will change.</li>
+        <li>The entry box in the upper right is for entering "city, state" or "city, country".</li>
+        <li>You can bookmark a time and place by clicking the "permalink" link at the top of the page.  Once you do this you can use your browser to save a bookmark.</li>
+        <li>Hover anywhere within the chart to see more information about a particular item or area.</li>
+        <li>Magnitude 0 and 1 stars are shown along the inside of the signs - hover over them for more information.</li>
+        <li>You can select different zodiacs from the pull-down in the lower right.</li>
+        <li>Turn off the 'show ascendant' checkbox to show a chart without houses.  This makes it easier to see planet/aspect animations.</li>
+        <li>You can choose between heliocentric and geocentric calculations using the checkbox at the bottom.</li>
+        <li>You can display a two-ring chart by clicking on 'outer ring'.  The time for the outer ring is copied from the inner ring, so set the inner ring first, create the second ring, then adjust the inner ring.</li>
+        <li>The timezone is displayed in two different fields.  The first shows the time offset, in hours, and the second shows the "rule" used to determine the timezone.
+            Since the rule can determine when daylight time is in effect, it is better if you can find a rule rather than entering the time change manually.</li>
+        <li>Don't worry that the rule field is a bit small.  If you click in it, it will expand.</li>
+      </ul>
+      If you have any requests or ideas, please <a href="http://helianthusinc.com/contact.php">contact me</a>.
+    </div>
+  </div>
+  
+  <?php
+    pageFooter( $version );
+  ?>
+
+</body>
+</html>

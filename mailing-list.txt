@@ -1,0 +1,26 @@
+annie@cafeastrology.com - wanted to display it on her web site (Annie)
+keleuthos@gmail.com - had some feature requests (Patrick)
+pmuraly@yahoo.co.in - question about sidereal zodiacs (Muraly)
+jeremiahphreak@gmail.com - wanted a sidereal option
+ks@kirillsimin.com - asked about astrology s/w for mobile devices (windows mobile)
+sfp760@gmail.com - Asked about planet centered astrology (Brian)
+cscoot03@gmail.com - Had basic questions about the system
+skywatcher888@gmail.com - Planet centered astrology (Bill Gordon)  8/5/2009  --  email doesn't work!
+muzicman888@msn.com - Needed higher accuracy (Ricky Finkle)
+zodiacheaven@hotmail.com - Asked for Chiron, ref by Graham Cox (Laura Boomer)
+gdcox@clara.net - From a long time back, British Astrological Assn, etc. (Graham Cox)
+thinkaboutit_ai@hotmail.com - Wanted a planet-at-position search feature.  I suggested a more advanced search.  (10/11/2009)
+toledo@btconnect.com - Having trouble getting it running (Jonathon Clark)
+teanke@mac.com - see below
+trzan.herman@gmail.co - wants a better international atlas
+derekfolsen@yahoo.co - "On November 22, 2099, Pluto jumps more than 15 degrees instantaneously."
+Mrsveronica@frontiernet.net - Offered thanks for making the system available.
+ketayun@optonline.net - Thanked, and had quick question about the search feature.
+thinkaboutit_ai@hotmail.com - Reported bug in search (cp for capricorn)
+surelythiscantbetakenalready@gmail.com - Liked this: "superimpose my natal chart onto a live "here / now" clock"
+
+teanke@mac.com:
+- implement other house systems (Alcabitus, Koch, equal house, whole sign); I personally use equal house and whole sign the most.
+- a side panel that textually lists all current aspects, whether applying or separating
+- listing ecliptic latitude as well as longitude
+- table listing dignities of planets

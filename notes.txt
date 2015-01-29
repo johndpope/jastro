@@ -1,0 +1,25 @@
+zodiac selection doesn't persist fully (leading wrong one to display!)
+
+timezone should change when time slides into DST
+data panel flashes with 'now' selected 
+
+cool: planet centered chart - Mars
+cool: dasas
+cool: navamsa, etc., or just add 'harmonic'
+
+aspect orbs
+
+** mysterious reset - time flips out occasionally by like 2000 years - some strange race condition
+* mouseOver logic is messy and doesn't consistently show the right message - needs to just be one call to say what the mouse is over
+
+Jupiter-Saturn:
+  01/1862: 18vi42
+  04/1881: 02ta42 - 136 00
+  10/1901: 16cp34 - 106 08
+  09/1921: 28vi28 - 108 06 10
+  11/1940: 12ta04 - 136 24 10
+  04/1961: 24cp13 - 107 51 08
+  04/1981: 08li00 -        10
+  06/2000: 21ta38          09
+  11/2020: 01aq53          07
+  

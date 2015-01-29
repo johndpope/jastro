@@ -1,0 +1,649 @@
+"UTF-8" ?>
+<Module>
+<ModulePrefs
+title="__MSG_title__"
+directory_title="__MSG_title__"
+title_url="http://maps.google.com/maps?q=__UP_location__"
+description="__MSG_description__"
+author="Mark L."
+author_affiliation="Google"
+author_location="Santa Barbara, CA"
+author_email="googlemodules+mapsearch@google.com"
+screenshot="/ig/modules/mapsearch.png"
+thumbnail="/ig/modules/mapsearch-thm.png"
+height="375"
+scrolling="true"
+render_inline="optional"
+category="tools"
+>
+<Require feature="setprefs"/>
+<Locale messages="mapsearch_content/en.xml"/>
+<Locale lang="da" messages="mapsearch_content/da.xml"/>
+<Locale lang="de" messages="mapsearch_content/de.xml"/>
+<Locale lang="es" messages="mapsearch_content/es.xml"/>
+<Locale lang="fi" messages="mapsearch_content/fi.xml"/>
+<Locale lang="fr" messages="mapsearch_content/fr.xml"/>
+<Locale lang="it" messages="mapsearch_content/it.xml"/>
+<Locale lang="ja" messages="mapsearch_content/ja.xml"/>
+<Locale lang="ko" messages="mapsearch_content/ko.xml"/>
+<Locale lang="nl" messages="mapsearch_content/nl.xml"/>
+<Locale lang="no" messages="mapsearch_content/no.xml"/>
+<Locale lang="ru" messages="mapsearch_content/ru.xml"/>
+<Locale lang="sv" messages="mapsearch_content/sv.xml"/>
+<Locale lang="zh-CN" messages="mapsearch_content/zh-cn.xml"/>
+<Locale lang="zh-TW" messages="mapsearch_content/zh-tw.xml"/>
+<Locale lang="pt-BR" messages="mapsearch_content/pt-BR.xml"/>
+</ModulePrefs>
+
+<UserPref
+name="location"
+display_name="__MSG_location__"
+datatype="location"
+/>
+
+<UserPref
+name="largeMapMode"
+display_name="__MSG_large_map__"
+datatype="bool"
+default_value="true"
+/>
+<UserPref name="traffic" datatype="hidden" default_value=""/>
+<UserPref name="locationCacheString" datatype="hidden" default_value=""/>
+<UserPref name="locationCacheLat" datatype="hidden" default_value=""/>
+<UserPref name="locationCacheLng" datatype="hidden" default_value=""/>
+
+<Content type="html"> <![CDATA[
+<!--
+* Load the Maps API
+* AJAX Search API
+* Local Search Control
+*
+* Note: IF you copy this sample, make sure you make the following
+* changes:
+* a) replace &key=internal with &key=YOUR-KEY
+* b) Path Prefix to gmlocalsearch.* should be
+* http://www.google.com/uds/solutions/localsearch/
+* c) Path prefix to ../../api?file=uds.js and to ../../css/gsearch.css
+* should be http://www.google.com/uds
+-->
+<script src="http://maps.google.com/maps?file=api&v=2.94" type="text/javascript"></script>
+<script src="http://www.google.com/uds/api?file=uds.js&v=1.0&key=internal-ig-mapsearch" type="text/javascript"></script>
+<script src="http://www.google.com/uds/solutions/localsearch/gmlocalsearch.js" type="text/javascript"></script>
+<style type="text/css">
+@import url("http://www.google.com/uds/css/gsearch.css");
+@import url("http://www.google.com/uds/solutions/localsearch/gmlocalsearch.css");
+
+#map__MODULE_ID__ {
+border : 1px solid #979797;
+}
+
+.small-map-__MODULE_ID__ {
+height : 100px;
+}
+
+.large-map-__MODULE_ID__ {
+height : 300px;
+}
+
+#map__MODULE_ID__ .gmls {
+width : 100%;
+}
+
+#results__MODULE_ID__ {
+margin-top : 30px;
+margin-bottom : 1px;
+}
+
+#wrapper__MODULE_ID__ .gmls-search-form {
+padding-top : 2px;
+padding-bottom : 2px;
+padding-left : 0;
+padding-right : 0;
+}
+
+#results__MODULE_ID__ .gmls-app,
+#map__MODULE_ID__ .gmls-app {
+border : none;
+}
+
+#wrapper__MODULE_ID__ {
+margin : 4px;
+}
+
+#wrapper__MODULE_ID__ .gs-title b {
+font-weight : normal;
+}
+#wrapper__MODULE_ID__ .gmls-results-controls td {
+background-color : #ffffff;
+}
+
+</style>
+
+<script type="text/javascript">
+
+function OnLoad__MODULE_ID__() {
+new MapGadget__MODULE_ID__();
+}
+
+/**
+* Begin Anonymous Code, exports window.MapGadget__MODULE_ID__
+*/
+{
+/**
+* The Core Map Gadget Object
+*/
+function MapGadget() {
+this.prefs = new _IG_Prefs(__MODULE_ID__);
+this.computeCenter();
+}
+window.MapGadget__MODULE_ID__ = MapGadget;
+
+/**
+* Compute the center point for the map
+*
+* If the location preference IS NOT set, then
+* use GetDefaultCenter
+*
+* Otherwise:
+* - If the preference matches the cached location string, use
+* the cached lat/lng. IF the cached lat/lng are unset, kill
+* the cache
+* - If the preference string DOES NOT match the cache, then
+* geo-code the location string. If this is successful, that
+* stash the string and lat/lng in the cache. If not, then use
+* GetDefaultCenter
+*/
+MapGadget.prototype.computeCenter = function() {
+var locationPref = this.prefs.getString("location");
+this.country = this.prefs.getString(".country");
+var center;
+if ( locationPref == "" ) {
+// no location preference is set
+// just use the locale specific default
+// center point
+center = GetDefaultCenter(null, this.country);
+} else {
+// preference is set.
+// if it matches the cache, and the cache is valid, then
+// use the cached preference. If it doesn't match, then clear
+// the cache and geocode
+var center = this.checkLocationCache(locationPref);
+if (center == null) {
+// fire up a geo-code operation which will eventually
+// call bootComplete
+var searcher = new GlocalSearch();
+searcher.setSearchCompleteCallback(this,
+MapGadget.prototype.geocodeComplete,
+[locationPref, searcher]);
+searcher.execute(locationPref);
+return;
+}
+}
+this.bootComplete(center);
+}
+
+/**
+* See Above...
+*
+* If the location cache is set and valid, then use it.
+* Otherwise clear the cache and let the geocoder take
+* over.
+*/
+MapGadget.prototype.checkLocationCache = function(locationPref) {
+var returnValue = null;
+var locationCacheString = this.prefs.getString("locationCacheString");
+if (locationCacheString) {
+if (locationCacheString == locationPref) {
+// cache matches, check to see if cached lat/lng is set
+// if so, use. If not, clear the cache
+var lat = this.prefs.getString("locationCacheLat");
+var lng = this.prefs.getString("locationCacheLng");
+if ( lat && lng ) {
+returnValue = new GLatLng(parseFloat(lat), parseFloat(lng));
+} else {
+this.clearLocationCache();
+}
+} else {
+// cache does not match. clear the cache
+this.clearLocationCache();
+}
+}
+return returnValue;
+}
+
+MapGadget.prototype.clearLocationCache = function() {
+this.prefs.set("locationCacheString", "");
+this.prefs.set("locationCacheLat", "");
+this.prefs.set("locationCacheLng", "");
+}
+
+MapGadget.prototype.setLocationCache = function(location, lat, lng) {
+this.prefs.set("locationCacheString", location);
+this.prefs.set("locationCacheLat", lat);
+this.prefs.set("locationCacheLng", lng);
+}
+
+/**
+* If the location cache is invalid, but the location preference
+* is set, we start a search which completes here. If we end up
+* with valid results, then we cache them and complete the boot
+* process. If not, we use the default center.
+*/
+MapGadget.prototype.geocodeComplete = function(locationPref, searcher) {
+var center;
+if ( searcher.results && searcher.results.length > 0 ) {
+var latString = searcher.results[0].lat;
+var lngString = searcher.results[0].lng;
+center = new GLatLng(parseFloat(latString), parseFloat(lngString));
+this.setLocationCache(locationPref, latString, lngString);
+} else {
+center = GetDefaultCenter(null, this.country);
+}
+this.bootComplete(center);
+}
+
+/**
+* Center point is computed so now fire up the map, startup the
+* traffic overlay, etc.
+*/
+MapGadget.prototype.bootComplete = function(centerPoint) {
+if (centerPoint == null) {
+centerPoint = GetDefaultCenter("en");
+}
+
+this.centerPoint = centerPoint;
+this.idleZoom = 11;
+this.activeZoom = 14;
+
+this.outerMapContainer = document.getElementById("map__MODULE_ID__");
+this.largeMapMode = this.prefs.getBool("largeMapMode");
+if (this.largeMapMode) {
+this.idleClass = "large-map-__MODULE_ID__";
+this.activeClass = "large-map-__MODULE_ID__";
+} else {
+this.idleClass = "small-map-__MODULE_ID__";
+this.activeClass = "large-map-__MODULE_ID__";
+}
+
+// Create and Center a Map
+this.gmap = new GMap2(this.outerMapContainer);
+this.gmap.setCenter(this.centerPoint, 13);
+this.smallMapControl = new GSmallMapControl();
+this.gmap.addControl(this.smallMapControl);
+
+// bind a search control to the map, suppress result list
+var options = new Object();
+options.resultList = document.getElementById("results__MODULE_ID__");
+options.searchFormHint = GetHintString();
+options.onIdleCallback =
+methodCallback(this, MapGadget.prototype.onIdleCallback);
+options.onSearchCompleteCallback =
+methodCallback(this, MapGadget.prototype.onSearchCompleteCallback);
+this.gmap.addControl(new google.maps.LocalSearch(options),
+new GControlPosition(G_ANCHOR_BOTTOM_LEFT, new GSize(0,-30)));
+
+// add traffic
+// traffic button state
+this.initializeTrafficOverlay();
+
+// register an unzip callback
+_IG_AddModuleEventHandler(__MODULE_ID__, "unzip", methodCallback(this, MapGadget.prototype.unzipCallback));
+}
+
+MapGadget.prototype.unzipCallback = function() {
+this.gmap.checkResize();
+}
+
+MapGadget.prototype.onIdleCallback = function() {
+if (this.largeMapMode == false && this.smallMapControl) {
+this.gmap.removeControl(this.smallMapControl);
+this.smallMapControl = null;
+}
+this.cssSetClass(this.outerMapContainer, this.idleClass);
+this.gmap.checkResize();
+this.gmap.setCenter(this.centerPoint, this.idleZoom);
+}
+
+MapGadget.prototype.onSearchCompleteCallback = function(searcher) {
+if (searcher.results && searcher.results.length > 0) {
+if (this.largeMapMode == false && this.smallMapControl == null) {
+this.smallMapControl = new GSmallMapControl();
+this.gmap.addControl(this.smallMapControl);
+}
+this.cssSetClass(this.outerMapContainer, this.activeClass);
+this.gmap.checkResize();
+this.gmap.setZoom(this.activeZoom);
+}
+}
+
+MapGadget.prototype.cssSetClass = function(el, className) {
+el.className = className;
+}
+
+/**
+* Traffic...
+*
+* Basic idea is that when the current map view contains traffic
+* data, we expose the traffic button (ToggleControl object). If
+* the user clicks on the button, we toggle traffic data on/off,
+* AND we remember the clicked state of the button in a hidden
+* pref.
+*
+* Algorithm:
+*
+* On Boot:
+* - create a ToggleControl (the traffic button) for toggling
+* traffic on/off (this.trafficControl)
+* - bind to map's moveend event which conditionally shows the
+* traffic button
+*
+* - create a GTrafficOverlay, add it to the map, and hide it.
+* We only show the overlay when the traffic button has been
+* pressed...
+*
+* On MoveEnd:
+* - at the end of a search, or anytime the map is moved, we
+* call .showHideTrafficButton. This function looks to see if
+* the current map view contains traffic data. If so, we show
+* the traffic button. Otherwise, we remove the traffic
+* button.
+*/
+MapGadget.prototype.initializeTrafficOverlay = function() {
+var me = this;
+
+// button state
+this.traffic = this.prefs.getString("traffic") != "";
+
+// traffic button
+var trafficPos = new GControlPosition(G_ANCHOR_TOP_RIGHT, new GSize(0.2, 0.2, "em", "em"));
+me.trafficControl = new ToggleControl("__MSG_traffic__");
+me.trafficControl.setOnClick(function() { me.toggleTraffic(); });
+
+// traffic overlay
+me.trafficOverlay = new GTrafficOverlay();
+GEvent.addListener(me.trafficOverlay, "changed",
+function(hasTrafficInView) {
+me.hasTrafficDataInView = hasTrafficInView;
+me.showHideTrafficButton(trafficPos);
+});
+me.gmap.addOverlay(me.trafficOverlay);
+me.trafficOverlay.hide();
+
+me.trafficButtonShown = false;
+me.hasTrafficDataInView = false;
+if (me.traffic) {
+me.toggleTraffic();
+me.updateTrafficOverlay();
+}
+}
+
+/**
+* Called at the end of a map move (or search). This function
+* displays the traffic button if the current view contains
+* traffic data. Otherwise it removes the traffic button.
+*/
+MapGadget.prototype.showHideTrafficButton = function(trafficPos) {
+var me = this;
+// timeout to wait for map to be ready
+window.setTimeout(function() {
+if (me.trafficOverlay) {
+var inView = me.hasTrafficDataInView;
+
+if (inView != me.trafficButtonShown) {
+if (inView) {
+me.gmap.addControl(me.trafficControl, trafficPos);
+me.trafficControl.setSize();
+me.trafficButtonShown = true;
+} else {
+me.gmap.removeControl(me.trafficControl);
+me.trafficButtonShown = false;
+}
+}
+}
+}, 0);
+}
+
+MapGadget.prototype.toggleTraffic = function() {
+var prevToggle = this.trafficControl.isToggled();
+this.trafficControl.setToggled(!prevToggle);
+this.prefs.set("traffic", !prevToggle ? "1" : "");
+this.updateTrafficOverlay();
+}
+
+MapGadget.prototype.updateTrafficOverlay = function() {
+// Make sure button size is set correctly. This is a work around to make
+// info windows dodge the button.
+this.trafficControl.setSize();
+
+if (this.trafficControl.isToggled()) {
+this.trafficOverlay.show();
+} else {
+this.trafficOverlay.hide();
+}
+}
+
+/**
+* Toggle Control - The button for traffic...
+*/
+function ToggleControl(text) {
+this.text_ = text;
+this.textDiv_ = null;
+this.div_ = null;
+this.container_ = null;
+this.trafficOverlay_ = null;
+this.isToggled_ = false;
+this.onClickCallback_ = null;
+}
+ToggleControl.prototype = new GControl();
+
+ToggleControl.prototype.setOnClick = function(callback) {
+this.onClickCallback_ = callback;
+}
+
+ToggleControl.prototype.onClick = function() {
+if (this.onClickCallback_) {
+this.onClickCallback_();
+}
+}
+
+ToggleControl.prototype.initialize = function(map) {
+var me = this;
+var container = document.createElement("div");
+// don't show button until size is known
+container.style.visibility = 'hidden';
+
+var div = document.createElement("div");
+var style = div.style;
+style.position = 'absolute';
+style.backgroundColor = "white";
+style.border = "1px solid black";
+style.color = "black";
+style.fontFamily = "Arial,sans-serif";
+style.fontSize = "12px";
+style.textAlign = "center";
+style.width = "5em";
+try {
+style.cursor = "pointer";
+} catch (e) {
+style.cursor = "hand";
+}
+container.appendChild(div);
+
+var textDiv = document.createElement("div");
+div.appendChild(textDiv);
+textDiv.appendChild(document.createTextNode(me.text_));
+
+me.container_ = container;
+me.div_ = div;
+me.textDiv_ = textDiv;
+
+map.getContainer().appendChild(container);
+me.setToggled(!!me.isToggled_);
+
+GEvent.addDomListener(me.textDiv_, "click", function() { me.onClick(); });
+
+return container;
+}
+
+ToggleControl.prototype.isToggled = function() {
+return this.isToggled_;
+}
+
+ToggleControl.prototype.setToggled = function(isToggled) {
+if (this.textDiv_) {
+var style = this.textDiv_.style;
+style["fontWeight"] = isToggled ? "bold" : "";
+
+// Mimic an impressed button by adding a shadow to the sides of the button
+if (isToggled) {
+style["border"] = "1px solid #6C9DDF";
+} else {
+style["border"] = "1px solid white";
+}
+
+var shadows = isToggled ? ["Top", "Left"] : ["Bottom", "Right"];
+var shadowColor = isToggled ? "1px solid #345684" :
+"1px solid #b0b0b0";
+for (var j = 0; j < shadows.length; j++) {
+style["border" + shadows[j]] = shadowColor;
+}
+}
+this.isToggled_ = isToggled;
+};
+
+ToggleControl.prototype.isToggled = function() {
+return this.isToggled_;
+}
+
+ToggleControl.prototype.setSize = function() {
+var div = this.div_;
+if (div) {
+var totalHeight = div.offsetHeight;
+var totalWidth = div.offsetWidth;
+if (totalWidth % 2 == 1) {
+totalWidth++;
+}
+if (totalWidth) {
+var style = this.container_.style;
+style["visibility"] = "";
+style["width"] = totalWidth + "px";
+style["height"] = totalHeight + "px";
+}
+}
+}
+
+/**
+* Dynamic Defaults
+*
+* Default Center Point and Search Hint String, Locale
+*
+* Note, these are indexed by both language code AND country
+* code
+*/
+
+// by language
+var DefaultByLanguageCenters = new Array();
+DefaultByLanguageCenters["en"] = new GLatLng(37.7750, -122.4183); // san francisco
+DefaultByLanguageCenters["fr"] = new GLatLng(48.8565, 2.3509); // paris
+DefaultByLanguageCenters["de"] = new GLatLng(52.5238, 13.4119); // berlin
+DefaultByLanguageCenters["es"] = new GLatLng(40.4167, -3.7032); // madrid
+DefaultByLanguageCenters["it"] = new GLatLng(45.4637, 9.1881); // milan
+DefaultByLanguageCenters["nl"] = new GLatLng(52.3738, 4.8909); // amsterdam
+DefaultByLanguageCenters["ja"] = new GLatLng(35.6699, 139.7700); // tokyo
+
+// by country
+var DefaultByCountryCenters = new Array();
+DefaultByCountryCenters["US"] = new GLatLng(37.7750, -122.4183); // san francisco
+DefaultByCountryCenters["FR"] = new GLatLng(48.8565, 2.3509); // paris
+DefaultByCountryCenters["DE"] = new GLatLng(52.5238, 13.4119); // berlin
+DefaultByCountryCenters["ES"] = new GLatLng(40.4167, -3.7032); // madrid
+DefaultByCountryCenters["IT"] = new GLatLng(45.4637, 9.1881); // milan
+DefaultByCountryCenters["NL"] = new GLatLng(52.3738, 4.8909); // amsterdam
+DefaultByCountryCenters["CA"] = new GLatLng(45.512280, -73.554380); // montreal
+DefaultByCountryCenters["CH"] = new GLatLng(47.369023, 8.538032); // zurich
+DefaultByCountryCenters["DK"] = new GLatLng(55.676294, 12.568115); // copenhagen
+DefaultByCountryCenters["FI"] = new GLatLng(60.160791, 24.952548); // helsinki
+DefaultByCountryCenters["UK"] = new GLatLng(51.500152, -0.126236); // london
+DefaultByCountryCenters["SE"] = new GLatLng(59.332725, 18.064454); // stockholm
+DefaultByCountryCenters["NO"] = new GLatLng(59.913820, 10.738741); // oslo
+DefaultByCountryCenters["HK"] = new GLatLng(22.28434, 114.15819); // Hong Kong
+DefaultByCountryCenters["TW"] = new GLatLng(25.047697, 121.51705); // Taipei
+
+// not in whitelist regions
+DefaultByCountryCenters["IN"] = new GLatLng(12.908001, 77.641011); // bangalore (not in whitelist)
+DefaultByCountryCenters["JP"] = new GLatLng(35.6699, 139.7700); // tokyo (not in whitelist)
+DefaultByCountryCenters["AU"] = new GLatLng(-33.867139, 151.207114); // sydney (not in whitelist)
+
+// good tiles, no search coverage
+DefaultByCountryCenters["NZ"] = new GLatLng(-41.286480, 174.776217); // wellington (no search coverage)
+DefaultByCountryCenters["RU"] = new GLatLng(55.755786, 37.617633); // moscow (no search coverage)
+DefaultByCountryCenters["IE"] = new GLatLng(53.344104, -6.267493); // dublin (no search coverage)
+DefaultByCountryCenters["BR"] = new GLatLng(-23.548943, -46.638818); // Sao Paulo (no search coverage)
+
+// bad tiles, poor experience
+// DefaultByCountryCenters["KR"] = new GLatLng(37.532308, 126.957440); // seoul (bad map tile coverage)
+// DefaultByCountryCenters["MX"] = new GLatLng(19.410636, -99.130588); // mexico city (bad map tile coverage)
+// DefaultByCountryCenters["CN"] = new GLatLng(39.930000, 116.400001); // beijing (bad map tile coverage)
+
+function GetDefaultCenter(opt_locale, opt_country) {
+var locale = UDS_CurrentLocale;
+var country = null;
+if (opt_locale) {
+locale = opt_locale;
+}
+var returnValue;
+if (opt_country) {
+country = opt_country.toUpperCase();
+returnValue = DefaultByCountryCenters[country];
+if (returnValue != undefined) {
+return returnValue;
+}
+}
+returnValue = DefaultByLanguageCenters[locale];
+if (returnValue == undefined) {
+returnValue = DefaultByLanguageCenters["en"];
+}
+return returnValue;
+}
+
+var DefaultHints = new Array();
+DefaultHints["en"] = "Example Searches: Hotels in New York City";
+DefaultHints["fr"] = "Exemples de recherche : Hotels";
+DefaultHints["de"] = "Beispiele f\u00FCr Suchanfragen: Hotels"; // 00fc --> ü
+DefaultHints["es"] = "Ejemplos de b\u00FAsquedas: Hoteles"; // 00fa --> ú
+DefaultHints["it"] = "Esempi di ricerca: Hotels";
+DefaultHints["nl"] = "Voorbeelden van zoekopdrachten: Hotels";
+DefaultHints["pt-BR"] = "por exemplo: hot\u00e9is em S\u00E3o Paulo"; // 00e3 ~a
+
+function GetHintString(opt_locale) {
+var locale = UDS_CurrentLocale;
+if (opt_locale) {
+locale = opt_locale;
+}
+var returnValue;
+returnValue = DefaultHints[locale];
+if (returnValue == undefined) {
+returnValue = GSearch.strings["search-the-map"];
+}
+return returnValue;
+}
+
+function methodCallback(object, method) {
+return function() {
+return method.apply(object, arguments);
+}
+}
+}
+/** END Anonymous Function **/
+
+_IG_RegisterOnloadHandler(OnLoad__MODULE_ID__);
+</script>
+</head>
+
+<div id="wrapper__MODULE_ID__">
+<div id="map__MODULE_ID__" class="small-map-__MODULE_ID__"></div>
+<div id="results__MODULE_ID__">__MSG_loading__</div>
+</div>
+]]>
+</Content>
+</Module>

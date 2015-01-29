@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+<ModulePrefs
+title="AstrologyClock"
+title_url="http://marklipson.com/jastro/"
+description="Astrology chart, updated every few minutes"
+author="Mark Lipson"
+author_affiliation="Lunar Logic"
+author_location="Eugene, OR"
+author_email="info@lunarlogic.com"
+author_aboutme="Lunar Logic builds custom web applications."
+screenshot="http://marklipson.com/charts/screenshot.png"
+thumbnail="http://marklipson.com/charts/thumbnail.png"
+height="260"
+scrolling="false"
+render_inline="optional"
+category="entertainment"
+/>
+ <UserPref
+  name="location"
+  display_name="Location"
+  datatype="enum"
+ >
+   <EnumValue value="ANC" display_value="Anchorage, AK"/>
+   <EnumValue value="ORD" display_value="Chicago, IL"/>
+   <EnumValue value="DFW" display_value="Dallas, TX"/>
+   <EnumValue value="DIA" display_value="Denver, CO"/>
+   <EnumValue value="LAX" display_value="Los Angeles, CA"/>
+   <EnumValue value="MIA" display_value="Miami, FL"/>
+   <EnumValue value="NYC" display_value="New York, NY"/>
+   <EnumValue value="PHL" display_value="Philadelphia, PA"/>
+   <EnumValue value="PDX" display_value="Portland, OR"/>
+   <EnumValue value="SFO" display_value="San Francsico, CA"/>
+   <EnumValue value="SEA" display_value="Seattle, WA"/>
+ </UserPref>
+
+<Content type="html"><![CDATA[
+<script type="text/javascript">
+  var prefs = new _IG_Prefs();
+  function selectLocation()
+  {
+    var loc = prefs.getString( "location" );
+    if (loc != "")
+      loc = "-" + loc;
+    document.getElementById( "astroclock-img" ).src = "http://marklipson.com/charts/chart" + loc + ".png";
+  }
+  function astroclockFull()
+  {
+    window.parent.location = document.getElementById( "astroclock-img" ).src;
+  }
+  _IG_RegisterOnloadHandler(selectLocation);
+</script>
+<div style="background:#fffff0; height: 100%; text-align: center" title="Click to view full size" onclick="astroclockFull()">
+<img src="http://marklipson.com/charts/chart.png" id="astroclock-img" width="260" height="260"/>
+</div>
+]]></Content>
+</Module>
